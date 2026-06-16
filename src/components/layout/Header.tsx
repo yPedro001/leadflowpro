@@ -5,6 +5,7 @@ import { logout } from '@/actions/auth';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useOperator } from '@/components/providers/OperatorProvider';
 import { NotificationBell } from '@/features/notifications/NotificationBell';
+import { useProfile } from '@/components/providers/ProfileProvider';
 
 interface HeaderProps {
   userName: string;
@@ -12,6 +13,7 @@ interface HeaderProps {
 
 export function Header({ userName }: HeaderProps) {
   const { activeOperator, setActiveOperator } = useOperator();
+  const { planConfig } = useProfile();
 
   return (
     <header className="h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 fixed top-0 right-0 left-64 z-40 flex items-center justify-between px-6 transition-colors">
@@ -21,13 +23,15 @@ export function Header({ userName }: HeaderProps) {
             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <span className="opacity-70 text-xs uppercase tracking-wider ml-1">Operando como:</span>
             <span>{activeOperator.name}</span>
-            <button 
-              onClick={() => setActiveOperator(null)}
-              className="ml-2 pl-2 border-l border-gold-200 dark:border-gold-800 hover:text-gold-900 dark:hover:text-gold-300 transition-colors text-xs opacity-70 hover:opacity-100"
-              title="Trocar operador"
-            >
-              Trocar
-            </button>
+            {planConfig.canUseMultiOperators && (
+              <button 
+                onClick={() => setActiveOperator(null)}
+                className="ml-2 pl-2 border-l border-gold-200 dark:border-gold-800 hover:text-gold-900 dark:hover:text-gold-300 transition-colors text-xs opacity-70 hover:opacity-100"
+                title="Trocar operador"
+              >
+                Trocar
+              </button>
+            )}
           </div>
         )}
       </div>

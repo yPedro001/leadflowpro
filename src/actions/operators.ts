@@ -29,6 +29,18 @@ export async function createOperator(formData: FormData) {
     return { success: false, error: 'Nome do operador é obrigatório' };
   }
 
+  // Verificação de limites do plano
+  const { getPlanConfig } = await import('@/lib/plans');
+  const planConfig = getPlanConfig(profile.plan);
+  if (planConfig.maxOperators !== null) {
+    const currentOperators = await prisma.operator.count({ 
+      where: { profileId: profile.id, isActive: true } 
+    });
+    if (currentOperators >= planConfig.maxOperators) {
+      return { success: false, error: `Limite do plano atingido (${planConfig.maxOperators} operadores). Faça upgrade para continuar.` };
+    }
+  }
+
   try {
     const operator = await prisma.operator.create({
       data: {

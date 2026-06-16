@@ -2,20 +2,22 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, FileText, BadgeCheck, Upload, Settings, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, BadgeCheck, Upload, Settings, CalendarDays, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/analytics' },
-  { icon: CalendarDays, label: 'Agenda', href: '/agenda' },
-  { icon: Users, label: 'Leads', href: '/leads' },
-  { icon: FileText, label: 'Templates', href: '/templates' },
-  { icon: Upload, label: 'Importar', href: '/import' },
-  { icon: Settings, label: 'Configurações', href: '/settings' },
-];
+import { useProfile } from '@/components/providers/ProfileProvider';
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { planConfig } = useProfile();
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/analytics', locked: !planConfig.canUseAnalytics },
+    { icon: CalendarDays, label: 'Agenda', href: '/agenda', locked: !planConfig.canUseAgenda },
+    { icon: Users, label: 'Leads', href: '/leads', locked: false },
+    { icon: FileText, label: 'Templates', href: '/templates', locked: false },
+    { icon: Upload, label: 'Importar', href: '/import', locked: false },
+    { icon: Settings, label: 'Configurações', href: '/settings', locked: false },
+  ];
 
   return (
     <div className="flex flex-col h-screen w-64 bg-slate-950 text-slate-200 border-r border-slate-800 fixed left-0 top-0 z-50">
@@ -30,6 +32,8 @@ export function Sidebar() {
       {/* Navegação */}
       <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
         {menuItems.map((item) => {
+          if (item.locked) return null; // Não exibe itens bloqueados pelo plano no menu
+
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
@@ -60,7 +64,12 @@ export function Sidebar() {
       {/* Rodapé */}
       <div className="p-4 border-t border-slate-800">
         <div className="bg-slate-900/50 rounded-2xl p-4 border border-slate-800">
-          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">LeadFlowPro v2</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">LeadFlowPro v2</p>
+            <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full', planConfig.badgeColor)}>
+              {planConfig.label}
+            </span>
+          </div>
           <p className="text-[10px] text-slate-600">Gestão inteligente de leads</p>
         </div>
       </div>

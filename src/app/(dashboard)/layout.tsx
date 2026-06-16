@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { OperatorProvider } from '@/components/providers/OperatorProvider';
 import { CadenceProvider } from '@/components/providers/CadenceProvider';
+import { ProfileProvider } from '@/components/providers/ProfileProvider';
 import { prisma } from '@/lib/prisma';
 import { unstable_cache } from 'next/cache';
 
@@ -33,24 +34,26 @@ export default async function DashboardLayout({
 
   const profile = await prisma.profile.findUnique({
     where: { authUid: user.id },
-    select: { id: true },
+    select: { id: true, authUid: true, name: true, email: true, plan: true },
   });
 
   const operators = profile ? await getOperatorsCached(profile.id) : [];
 
   return (
-    <CadenceProvider>
-      <OperatorProvider operators={operators}>
-        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
-          <Sidebar />
-          <div className="flex-1 ml-64">
-            <Header userName={user.user_metadata?.name || user.email || 'Usuário'} />
-            <main className="p-4 md:p-6 pt-24">
-              {children}
-            </main>
+    <ProfileProvider profile={profile as any}>
+      <CadenceProvider>
+        <OperatorProvider operators={operators}>
+          <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
+            <Sidebar />
+            <div className="flex-1 ml-64">
+              <Header userName={profile?.name || user.email || 'Usuário'} />
+              <main className="p-4 md:p-6 pt-24">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
-      </OperatorProvider>
-    </CadenceProvider>
+        </OperatorProvider>
+      </CadenceProvider>
+    </ProfileProvider>
   );
 }

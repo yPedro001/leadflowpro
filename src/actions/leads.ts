@@ -280,6 +280,17 @@ export async function createLead(
 ): Promise<LeadFormResult> {
   try {
     const profile = await getAuthProfile();
+    
+    // Verificação de limites do plano
+    const { getPlanConfig } = await import('@/lib/plans');
+    const planConfig = getPlanConfig(profile.plan);
+    if (planConfig.maxLeads !== null) {
+      const currentLeads = await prisma.lead.count({ where: { profileId: profile.id } });
+      if (currentLeads >= planConfig.maxLeads) {
+        return { success: false, error: `Limite do plano atingido (${planConfig.maxLeads} leads). Faça upgrade para continuar.` };
+      }
+    }
+
     const raw = Object.fromEntries(formData.entries());
     const parsed = leadSchema.safeParse(raw);
     if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };

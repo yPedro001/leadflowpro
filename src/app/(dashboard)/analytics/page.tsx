@@ -1,7 +1,11 @@
 import { Suspense } from 'react';
-import { LayoutDashboard, Loader2 } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 import { getAnalytics } from '@/actions/analytics';
 import dynamic from 'next/dynamic';
+import { createServerSupabase } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
+import { getPlanConfig } from '@/lib/plans';
+import { PremiumFeatureBlocked } from '@/components/ui/PremiumFeatureBlocked';
 
 const AnalyticsDashboard = dynamic(
   () => import('@/features/analytics/AnalyticsDashboard').then((mod) => mod.AnalyticsDashboard),
@@ -22,9 +26,9 @@ const AnalyticsDashboard = dynamic(
           <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl p-6 h-48" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-slate-100 dark:bg:sLate-800 rounded-2xl p-5 h-24" />
-          <div className="bg-slate-100 dark:bg:sLate-800 rounded-2xl p-5 h-24" />
-          <div className="bg-slate-100 dark:bg:sLate-800 rounded-2xl p-5 h-24" />
+          <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl p-5 h-24" />
+          <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl p-5 h-24" />
+          <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl p-5 h-24" />
         </div>
       </div>
     ),
@@ -38,6 +42,28 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
+  const supabase = await createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    const profile = await prisma.profile.findUnique({
+      where: { authUid: user.id },
+      select: { plan: true },
+    });
+    
+    if (profile) {
+      const planConfig = getPlanConfig(profile.plan);
+      if (!planConfig.canUseAnalytics) {
+        return (
+          <PremiumFeatureBlocked 
+            title="Analytics e Relatórios" 
+            description="Gráficos avançados, performance da equipe e análise de conversões são exclusivos para contas superiores." 
+          />
+        );
+      }
+    }
+  }
+
   const data = await getAnalytics();
 
   return (

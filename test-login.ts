@@ -1,9 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('./src/lib/prisma');
 require('dotenv').config({ path: '.env' });
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-const prisma = new PrismaClient();
 
 async function testLoginAndAccess() {
   console.log('Tentando login com teste2@gmail.com...');
@@ -72,7 +71,8 @@ async function testLoginAndAccess() {
   } catch (err) {
     console.error('ERRO AO ACESSAR DADOS NO PRISMA:', err);
   } finally {
-    await prisma.$disconnect();
+    console.log('Desconectando...');
+    process.exit(0);
   }
 }
 

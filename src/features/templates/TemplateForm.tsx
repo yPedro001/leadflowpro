@@ -7,6 +7,7 @@ import { createTemplate, updateTemplate, improveTemplateText, type TemplateFormR
 import { TEMPLATE_CHANNEL_MAP } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { Template } from '@prisma/client';
+import { useProfile } from '@/components/providers/ProfileProvider';
 
 interface TemplateFormProps {
   template?: Template;
@@ -30,6 +31,7 @@ function resolveBody(body: string): string {
 }
 
 export function TemplateForm({ template, onClose }: TemplateFormProps) {
+  const { planConfig } = useProfile();
   const isEdit = !!template;
   const action = isEdit ? updateTemplate.bind(null, template.id) : createTemplate;
 
@@ -220,18 +222,25 @@ export function TemplateForm({ template, onClose }: TemplateFormProps) {
                   className="w-full bg-transparent dark:bg-slate-950 border border-slate-200 dark:border-slate-800 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500/30 focus:border-gold-500 transition-all resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   placeholder={`Olá {{firstName}},\n\nVi seu trabalho na {{company}}...`}
                 />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {variables.map((v) => (
-                    <button
-                      key={v.value}
-                      type="button"
-                      onClick={() => handleInsertVariable(v.value)}
-                      className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 hover:bg-gold-50 dark:hover:bg-gold-900/30 text-slate-500 dark:text-slate-400 hover:text-gold-600 dark:hover:text-gold-400 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-gold-200 dark:hover:border-gold-800/50 transition-all active:scale-95"
-                    >
-                      + {v.label}
-                    </button>
-                  ))}
-                </div>
+                {planConfig.canUseTemplateVariables && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {variables.map((v) => (
+                      <button
+                        key={v.value}
+                        type="button"
+                        onClick={() => handleInsertVariable(v.value)}
+                        className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 hover:bg-gold-50 dark:hover:bg-gold-900/30 text-slate-500 dark:text-slate-400 hover:text-gold-600 dark:hover:text-gold-400 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-gold-200 dark:hover:border-gold-800/50 transition-all active:scale-95"
+                      >
+                        + {v.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!planConfig.canUseTemplateVariables && (
+                  <div className="mt-2 text-[11px] text-amber-500 font-medium">
+                    Variáveis de personalização exclusivas para planos Profissional+.
+                  </div>
+                )}
               </div>
 
               {/* Ativo */}

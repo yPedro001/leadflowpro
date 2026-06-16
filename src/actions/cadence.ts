@@ -853,6 +853,15 @@ export async function updateCadenceSettings(cadenceId: string, stagesData: any[]
   const profile = await getAuthProfile();
   if (!profile) throw new Error('Não autorizado');
 
+  // Verificação de limites do plano
+  const { getPlanConfig } = await import('@/lib/plans');
+  const planConfig = getPlanConfig(profile.plan);
+  if (planConfig.maxCadenceStages !== null) {
+    if (stagesData.length > planConfig.maxCadenceStages) {
+      throw new Error(`Limite do plano atingido: O seu plano permite no máximo ${planConfig.maxCadenceStages} estágios de cadência. Faça upgrade para adicionar mais.`);
+    }
+  }
+
   return await prisma.$transaction(async (tx) => {
     // 1. Busca estágios antigos para comparação
     const oldStages = await tx.cadenceStage.findMany({
