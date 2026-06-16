@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, FileText, BadgeCheck, Upload, Settings, CalendarDays, Lock } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, BadgeCheck, Upload, Settings, CalendarDays, Lock, LifeBuoy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/components/providers/ProfileProvider';
 
@@ -16,6 +16,7 @@ export function Sidebar() {
     { icon: Users, label: 'Leads', href: '/leads', locked: false },
     { icon: FileText, label: 'Templates', href: '/templates', locked: false },
     { icon: Upload, label: 'Importar', href: '/import', locked: false },
+    { icon: LifeBuoy, label: 'Suporte', href: '/suporte', locked: false },
     { icon: Settings, label: 'Configurações', href: '/settings', locked: false },
   ];
 
