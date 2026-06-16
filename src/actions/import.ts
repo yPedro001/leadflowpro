@@ -16,7 +16,16 @@ export async function processImportChunk(
   const profile = await getAuthProfile();
   if (!operatorId) throw new Error('Operador não especificado para a importação.');
 
-  const results = { created: 0, updated: 0, errors: 0 };
+  const { getPlanConfig } = await import('@/lib/plans');
+  const planConfig = getPlanConfig(profile.plan);
+  
+  let maxAllowedToCreate = Infinity;
+  if (planConfig.maxLeads !== null) {
+    const currentLeads = await prisma.lead.count({ where: { profileId: profile.id } });
+    maxAllowedToCreate = Math.max(0, planConfig.maxLeads - currentLeads);
+  }
+
+  const results = { created: 0, updated: 0, errors: 0, blocked: 0 };
 
   // Usa transação sequencial para o Chunk para permitir Upserts com History
   // Importante: No PostgreSQL, Prisma Upsert é melhor feito em loop para cada um ou com prisma.lead.upsert
@@ -80,6 +89,11 @@ export async function processImportChunk(
           results.updated++;
         } else {
           // CREATE
+          if (results.created >= maxAllowedToCreate) {
+            results.blocked++;
+            return; // Skip creation for this lead within the transaction
+          }
+
           const newLead = await tx.lead.create({
             data: {
               profileId: profile.id,

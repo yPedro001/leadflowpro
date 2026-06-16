@@ -4,6 +4,9 @@ import { getLeads } from '@/actions/leads';
 import { getTemplates } from '@/actions/templates';
 import { LeadsTableWrapper } from '@/features/leads/LeadsTableWrapper';
 import { LeadFilters } from '@/features/leads/LeadFilters';
+import { createServerSupabase } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
+import { getPlanConfig } from '@/lib/plans';
 
 export const metadata = {
   title: 'Leads – LeadFlowPro',
@@ -20,6 +23,21 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   const search = typeof params.search === 'string' ? params.search : '';
   const status = typeof params.status === 'string' ? params.status : '';
   const stage = typeof params.stage === 'string' ? params.stage : '';
+
+  const supabase = await createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let maxLeads: number | null = null;
+  if (user) {
+    const profile = await prisma.profile.findUnique({
+      where: { authUid: user.id },
+      select: { plan: true },
+    });
+    if (profile) {
+      const planConfig = getPlanConfig(profile.plan);
+      maxLeads = planConfig.maxLeads;
+    }
+  }
 
   const [result, templatesResult] = await Promise.all([
     getLeads({ page, search, status, stage }),
@@ -72,6 +90,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               initialPage={page}
               initialTotalPages={safeTotalPages}
               templates={safeTemplates as any}
+              maxLeads={maxLeads}
             />
           </Suspense>
         </>

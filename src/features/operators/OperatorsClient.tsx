@@ -13,9 +13,10 @@ type Operator = {
 
 interface OperatorsClientProps {
   initialOperators: Operator[];
+  maxOperators: number | null;
 }
 
-export function OperatorsClient({ initialOperators }: OperatorsClientProps) {
+export function OperatorsClient({ initialOperators, maxOperators }: OperatorsClientProps) {
   const [operators, setOperators] = useState<Operator[]>(initialOperators);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOperator, setEditingOperator] = useState<Operator | null>(null);
@@ -109,13 +110,22 @@ export function OperatorsClient({ initialOperators }: OperatorsClientProps) {
             Cadastre os membros da sua equipe para rastrear quem atende cada lead no dispositivo.
           </p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-xl font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Novo Operador
-        </button>
+        <div className="flex items-center gap-4">
+          {maxOperators !== null && (
+            <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+              Uso: {operators.filter(o => o.isActive).length} / {maxOperators}
+            </div>
+          )}
+          <button
+            onClick={() => handleOpenModal()}
+            disabled={maxOperators !== null && operators.filter(o => o.isActive).length >= maxOperators}
+            className="flex items-center gap-2 px-4 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={maxOperators !== null && operators.filter(o => o.isActive).length >= maxOperators ? 'Limite de operadores atingido' : ''}
+          >
+            <Plus className="w-4 h-4" />
+            Novo Operador
+          </button>
+        </div>
       </div>
 
       <div className="divide-y divide-slate-100 dark:divide-slate-800">

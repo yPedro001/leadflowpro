@@ -287,7 +287,7 @@ export async function createLead(
     if (planConfig.maxLeads !== null) {
       const currentLeads = await prisma.lead.count({ where: { profileId: profile.id } });
       if (currentLeads >= planConfig.maxLeads) {
-        return { success: false, error: `Limite do plano atingido (${planConfig.maxLeads} leads). Faça upgrade para continuar.` };
+        return { success: false, error: `Seu plano atual atingiu o limite de leads. Faça upgrade ou remova leads para continuar.` };
       }
     }
 

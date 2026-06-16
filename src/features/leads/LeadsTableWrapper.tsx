@@ -13,9 +13,10 @@ interface LeadsTableWrapperProps {
   initialPage: number;
   initialTotalPages: number;
   templates: Template[];
+  maxLeads?: number | null;
 }
 
-export function LeadsTableWrapper({ initialLeads, initialTotal, initialPage, initialTotalPages, templates }: LeadsTableWrapperProps) {
+export function LeadsTableWrapper({ initialLeads, initialTotal, initialPage, initialTotalPages, templates, maxLeads = null }: LeadsTableWrapperProps) {
   const router = useRouter();
   const [isNavigating, startTransition] = useTransition();
 
@@ -109,6 +110,7 @@ export function LeadsTableWrapper({ initialLeads, initialTotal, initialPage, ini
       onLoadMore={loadMoreLeads}
       isLoadingMore={isLoadingMore}
       isRefreshing={isNavigating}
+      maxLeads={maxLeads}
     />
   );
 }

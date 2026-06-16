@@ -35,9 +35,10 @@ interface CadenceSettingsProps {
   cadenceId: string;
   initialStages: Stage[];
   templates: Template[];
+  maxStages: number | null;
 }
 
-export function CadenceSettings({ cadenceId, initialStages, templates }: CadenceSettingsProps) {
+export function CadenceSettings({ cadenceId, initialStages, templates, maxStages }: CadenceSettingsProps) {
   const [stages, setStages] = useState<Stage[]>(initialStages);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -104,13 +105,22 @@ export function CadenceSettings({ cadenceId, initialStages, templates }: Cadence
           </h2>
           <p className="text-sm text-slate-500 mt-1">Defina a sequência de ações e o tempo de espera entre cada contato.</p>
         </div>
-        <button
-          onClick={handleAddStage}
-          className="flex items-center gap-2 px-4 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-gold-200 dark:shadow-none"
-        >
-          <Plus className="w-4 h-4" />
-          Adicionar Estágio
-        </button>
+        <div className="flex items-center gap-4">
+          {maxStages !== null && (
+            <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+              Uso: {stages.length} / {maxStages}
+            </div>
+          )}
+          <button
+            onClick={handleAddStage}
+            disabled={maxStages !== null && stages.length >= maxStages}
+            className="flex items-center gap-2 px-4 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-gold-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+            title={maxStages !== null && stages.length >= maxStages ? 'Limite de etapas atingido para o seu plano' : ''}
+          >
+            <Plus className="w-4 h-4" />
+            Adicionar Estágio
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3 mb-8">

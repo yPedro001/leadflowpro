@@ -216,6 +216,8 @@ export function ImportWizard() {
     }
   };
 
+  const [importResults, setImportResults] = useState<{ created: number; updated: number; errors: number; blocked: number } | null>(null);
+
   // ────────────────────────────────────────────────────────
   // STEP 3: SUBMIT CHUNKS
   // ────────────────────────────────────────────────────────
@@ -228,12 +230,22 @@ export function ImportWizard() {
     const totalChunks = Math.ceil(leads.length / CHUNK_SIZE);
     const batchId = `import_${Date.now()}`;
 
+    let totalCreated = 0;
+    let totalUpdated = 0;
+    let totalErrors = 0;
+    let totalBlocked = 0;
+
     for (let i = 0; i < totalChunks; i++) {
         const chunk = leads.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-        await processImportChunk(chunk, batchId, activeOperator?.id || '', customSource || undefined);
+        const res = await processImportChunk(chunk, batchId, activeOperator?.id || '', customSource || undefined);
+        totalCreated += res.created;
+        totalUpdated += res.updated;
+        totalErrors += res.errors;
+        totalBlocked += res.blocked;
         setProgress(Math.round(((i + 1) / totalChunks) * 100));
     }
 
+    setImportResults({ created: totalCreated, updated: totalUpdated, errors: totalErrors, blocked: totalBlocked });
     setProcessing(false);
     setStep(3);
   };
@@ -383,9 +395,31 @@ export function ImportWizard() {
             <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
           </div>
           <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">Importação Concluída!</h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">
-            {validation?.validLeads.length} leads foram importados e mesclados com sucesso no seu banco de dados.
+          <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
+            Processamos {validation?.validLeads.length} leads.
           </p>
+          <div className="flex flex-col gap-2 max-w-xs mx-auto mb-8 text-left">
+            <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+              <span className="text-slate-600 dark:text-slate-400">Criados:</span>
+              <span className="font-bold text-emerald-600">{importResults?.created || 0}</span>
+            </div>
+            <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+              <span className="text-slate-600 dark:text-slate-400">Atualizados (Mesclados):</span>
+              <span className="font-bold text-blue-600">{importResults?.updated || 0}</span>
+            </div>
+            {importResults?.blocked ? (
+              <div className="flex justify-between p-3 bg-amber-50 dark:bg-amber-950/50 rounded-lg border border-amber-200 dark:border-amber-800">
+                <span className="text-amber-700 dark:text-amber-500 font-semibold">Bloqueados por Limite do Plano:</span>
+                <span className="font-bold text-amber-600">{importResults.blocked}</span>
+              </div>
+            ) : null}
+            {importResults?.errors ? (
+              <div className="flex justify-between p-3 bg-rose-50 dark:bg-rose-950/50 rounded-lg border border-rose-200 dark:border-rose-800">
+                <span className="text-rose-700 dark:text-rose-500 font-semibold">Erros durante processamento:</span>
+                <span className="font-bold text-rose-600">{importResults.errors}</span>
+              </div>
+            ) : null}
+          </div>
           <button 
             onClick={() => router.push('/leads')}
             className="bg-gold-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-gold-700 transition-colors"

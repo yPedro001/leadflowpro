@@ -37,7 +37,7 @@ export async function createOperator(formData: FormData) {
       where: { profileId: profile.id, isActive: true } 
     });
     if (currentOperators >= planConfig.maxOperators) {
-      return { success: false, error: `Limite do plano atingido (${planConfig.maxOperators} operadores). Faça upgrade para continuar.` };
+      return { success: false, error: `Seu plano atual permite até ${planConfig.maxOperators} operadores. Faça upgrade para adicionar mais operadores.` };
     }
   }
 
@@ -94,6 +94,20 @@ export async function toggleOperatorStatus(id: string, isActive: boolean) {
       where: { id, profileId: profile.id }
     });
     if (!existing) return { success: false, error: 'Operador não encontrado' };
+
+    if (isActive) {
+      // Verificação de limites do plano ao ativar
+      const { getPlanConfig } = await import('@/lib/plans');
+      const planConfig = getPlanConfig(profile.plan);
+      if (planConfig.maxOperators !== null) {
+        const currentOperators = await prisma.operator.count({ 
+          where: { profileId: profile.id, isActive: true } 
+        });
+        if (currentOperators >= planConfig.maxOperators) {
+          return { success: false, error: `Seu plano atual permite até ${planConfig.maxOperators} operadores. Faça upgrade para adicionar mais operadores.` };
+        }
+      }
+    }
 
     const operator = await prisma.operator.update({
       where: { id },

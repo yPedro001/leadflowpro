@@ -858,7 +858,7 @@ export async function updateCadenceSettings(cadenceId: string, stagesData: any[]
   const planConfig = getPlanConfig(profile.plan);
   if (planConfig.maxCadenceStages !== null) {
     if (stagesData.length > planConfig.maxCadenceStages) {
-      throw new Error(`Limite do plano atingido: O seu plano permite no máximo ${planConfig.maxCadenceStages} estágios de cadência. Faça upgrade para adicionar mais.`);
+      throw new Error(`Seu plano atual permite até ${planConfig.maxCadenceStages} etapas por cadência.`);
     }
   }
 

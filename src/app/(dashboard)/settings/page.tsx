@@ -24,7 +24,23 @@ export const metadata: Metadata = {
   description: 'Configurações do LeadFlowPro',
 };
 
+import { createServerSupabase } from '@/lib/supabase/server';
+import { prisma } from '@/lib/prisma';
+import { getPlanConfig } from '@/lib/plans';
+
 export default async function SettingsPage() {
+  const supabase = await createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('Não autorizado');
+
+  const profile = await prisma.profile.findUnique({
+    where: { authUid: user.id },
+    select: { plan: true },
+  });
+  
+  const planConfig = getPlanConfig(profile?.plan || 'STARTER');
+
   const [
     { operators, error: opError },
     cadence,
@@ -51,7 +67,7 @@ export default async function SettingsPage() {
               {opError}
             </div>
           ) : (
-            <OperatorsClient initialOperators={operators || []} />
+            <OperatorsClient initialOperators={operators || []} maxOperators={planConfig.maxOperators} />
           )}
 
           {cadence && (
@@ -60,6 +76,7 @@ export default async function SettingsPage() {
                 cadenceId={cadence.id} 
                 initialStages={cadence.stages as any} 
                 templates={templates.map(t => ({ id: t.id, name: t.name, channel: t.channel }))}
+                maxStages={planConfig.maxCadenceStages}
               />
             </Suspense>
           )}

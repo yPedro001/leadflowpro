@@ -34,9 +34,10 @@ interface LeadsTableProps {
   isLoadingMore?: boolean;
   isRefreshing?: boolean;
   filtersActive?: boolean;
+  maxLeads?: number | null;
 }
 
-export function LeadsTable({ leads, total, page, totalPages, templates, onPageChange, hasMore, onLoadMore, isLoadingMore, isRefreshing: externalRefreshing, filtersActive }: LeadsTableProps) {
+export function LeadsTable({ leads, total, page, totalPages, templates, onPageChange, hasMore, onLoadMore, isLoadingMore, isRefreshing: externalRefreshing, filtersActive, maxLeads = null }: LeadsTableProps) {
   const router = useRouter();
   const [isRefreshingInternal, setIsRefreshingInternal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -194,9 +195,16 @@ export function LeadsTable({ leads, total, page, totalPages, templates, onPageCh
               </button>
             </ConfirmDialog>
           )}
+          {maxLeads !== null && (
+            <div className="text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
+              Uso: {total} / {maxLeads}
+            </div>
+          )}
           <button
             onClick={() => setCreating(true)}
-            className="flex items-center gap-2 bg-gold-600 hover:bg-gold-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-gold-500/20"
+            disabled={maxLeads !== null && total >= maxLeads}
+            className="flex items-center gap-2 bg-gold-600 hover:bg-gold-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-gold-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={maxLeads !== null && total >= maxLeads ? 'Limite de leads atingido' : ''}
           >
             <Plus className="w-4 h-4" />
             Novo Lead
@@ -212,9 +220,16 @@ export function LeadsTable({ leads, total, page, totalPages, templates, onPageCh
           </div>
           <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">Nenhum lead encontrado</h3>
           <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Adicione seu primeiro lead ou ajuste os filtros</p>
+          {maxLeads !== null && (
+            <div className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-4">
+              Uso: {total} / {maxLeads}
+            </div>
+          )}
           <button
             onClick={() => setCreating(true)}
-            className="mt-6 bg-gold-600 hover:bg-gold-700 text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-all"
+            disabled={maxLeads !== null && total >= maxLeads}
+            className="mt-6 bg-gold-600 hover:bg-gold-700 text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            title={maxLeads !== null && total >= maxLeads ? 'Limite de leads atingido' : ''}
           >
             Adicionar Lead
           </button>
