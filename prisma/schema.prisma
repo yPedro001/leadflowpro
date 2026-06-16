@@ -69,6 +69,7 @@ model Profile {
   notifications    Notification[]
   scheduledActions LeadScheduledAction[]
   billingRecords   BillingRecord[]
+  supportTickets   SupportTicket[]
 
   @@map("profiles")
 }
@@ -421,4 +422,81 @@ model AdminAuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("admin_audit_logs")
+}
+
+// ═══════════════════════════════════════════════════════════
+// Suporte Técnico (SaaS)
+// ═══════════════════════════════════════════════════════════
+
+enum TicketCategory {
+  ACESSO
+  ERRO
+  DUVIDA
+  FINANCEIRO
+  SUGESTAO
+  OUTRO
+}
+
+enum TicketStatus {
+  ABERTO
+  ATENDIMENTO
+  RESPONDIDO
+  AGUARDANDO_CLIENTE
+  RESOLVIDO
+  FECHADO
+}
+
+enum TicketPriority {
+  BAIXA
+  NORMAL
+  ALTA
+}
+
+enum MessageSenderType {
+  CUSTOMER
+  ADMIN
+}
+
+model SupportTicket {
+  id              String         @id @default(uuid())
+  profileId       String         @map("profile_id")
+  category        TicketCategory
+  title           String
+  description     String         @db.Text
+  status          TicketStatus   @default(ABERTO)
+  priority        TicketPriority @default(NORMAL)
+  
+  isReadByAdmin   Boolean        @default(false) @map("is_read_by_admin")
+  isReadByCustomer Boolean       @default(true) @map("is_read_by_customer")
+
+  lastMessageAt   DateTime       @default(now()) @map("last_message_at")
+  closedAt        DateTime?      @map("closed_at")
+  
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  profile         Profile                @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  messages        SupportTicketMessage[]
+
+  @@index([profileId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id              String            @id @default(uuid())
+  ticketId        String            @map("ticket_id")
+  senderType      MessageSenderType @map("sender_type")
+  senderProfileId String?           @map("sender_profile_id")
+  message         String            @db.Text
+  isInternalNote  Boolean           @default(false) @map("is_internal_note")
+  
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  ticket          SupportTicket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+  @@map("support_ticket_messages")
 }
