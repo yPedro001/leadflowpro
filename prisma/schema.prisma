@@ -44,7 +44,7 @@ enum UserRole {
 // ═══════════════════════════════════════════════════════════
 
 model Profile {
-  id               String        @id @default(uuid())
+  id               String        @id @default(dbgenerated("gen_random_uuid()::text"))
   authUid          String        @unique @map("auth_uid")
   name             String
   email            String        @unique
