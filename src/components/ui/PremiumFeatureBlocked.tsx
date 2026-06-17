@@ -23,7 +23,7 @@ export function PremiumFeatureBlocked({ title, description }: { title: string; d
           Desbloqueie acesso completo a todas as ferramentas, aumente seus limites e escale sua operação.
         </p>
         <Link 
-          href="https://wa.me/5511999999999?text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20o%20upgrade%20do%20meu%20plano%20no%20LeadFlowPro" 
+          href="https://wa.me/5511961482455?text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20o%20upgrade%20do%20meu%20plano%20no%20LeadFlowPro" 
           target="_blank"
           className="flex items-center justify-center w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-gold-600 hover:from-amber-600 hover:to-gold-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-amber-500/25"
         >
