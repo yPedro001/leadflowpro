@@ -7,6 +7,7 @@ import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import type { LeadStatus } from '@prisma/client';
 import { getAuthProfile } from './auth';
 import { getLeadPageFromSupabase } from '@/lib/supabase/fallback-db';
+import { getPlanConfig } from '@/lib/plans';
 
 // ═══════════════════════
 // Schemas
@@ -154,6 +155,7 @@ export async function getLeads({
   
   const take = DEFAULT_PAGE_SIZE;
   const skip = (page - 1) * take;
+  const maxLeads = getPlanConfig(profile.plan).maxLeads;
 
   // Usa as novas condições de busca inteligentes
   const searchConditions = buildSearchConditions(search);
@@ -213,12 +215,13 @@ export async function getLeads({
     ]);
 
     const totalPages = Math.ceil(total / take);
-    return { leads, total, page, totalPages, error: undefined as string | undefined };
+    return { leads, total, page, totalPages, maxLeads, error: undefined as string | undefined };
   } catch (error: any) {
     console.error('getLeads: Erro ao buscar leads:', error);
     if (error?.message?.includes('ENOTFOUND') || error?.message?.includes('database') || error?.message?.includes('connection')) {
       try {
-        return await getLeadPageFromSupabase({ profileId: profile.id, page, take, search, status });
+        const fallbackResult = await getLeadPageFromSupabase({ profileId: profile.id, page, take, search, status });
+        return { ...fallbackResult, maxLeads };
       } catch (fallbackError: any) {
         console.error('getLeads: fallback Supabase falhou:', fallbackError);
       }
@@ -229,6 +232,7 @@ export async function getLeads({
       total: 0,
       page: 1,
       totalPages: 0,
+      maxLeads,
       error: error?.message || 'Erro ao carregar leads',
     };
   }

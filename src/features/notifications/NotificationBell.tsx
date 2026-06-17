@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Clock, Check, Trash2, ChevronRight } from 'lucide-react';
+import { Bell, Check, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { 
   DropdownMenu, 
@@ -8,7 +8,6 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -18,17 +17,70 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from 'next/link';
 
+type NotificationMetadata = {
+  ticketId?: string;
+  targetUrl?: string;
+};
+
+type NotificationItem = {
+  id: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  type: string;
+  leadId: string | null;
+  metadata: NotificationMetadata | null;
+  createdAt: Date | string;
+};
+
+function getNotificationTarget(notification: NotificationItem) {
+  const metadata = notification.metadata ?? {};
+  const type = notification.type?.toUpperCase();
+
+  if (metadata.targetUrl?.startsWith('/')) return metadata.targetUrl;
+
+  if (type === 'TICKET_UPDATE' || type === 'SUPPORT_TICKET' || type === 'SUPPORT_REPLY') {
+    return metadata.ticketId ? `/suporte/${metadata.ticketId}` : '/suporte';
+  }
+
+  if (type === 'CADENCE_OVERDUE' || type === 'AGENDA' || type === 'MANUAL_ACTION') {
+    return '/agenda';
+  }
+
+  return '/analytics';
+}
+
+function getNotificationCta(notification: NotificationItem) {
+  const type = notification.type?.toUpperCase();
+
+  if (type === 'TICKET_UPDATE' || type === 'SUPPORT_TICKET' || type === 'SUPPORT_REPLY') {
+    return 'Ver chamado';
+  }
+
+  if (type === 'CADENCE_OVERDUE' || type === 'AGENDA' || type === 'MANUAL_ACTION') {
+    return 'Ver agenda';
+  }
+
+  return 'Abrir';
+}
+
 export function NotificationBell() {
   const { unreadCount, stateHash, refresh } = useCadence();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Busca detalhes quando o hash de estado muda ou quando abre o menu
   const loadNotifications = async () => {
     setIsLoading(true);
     try {
       const data = await getNotifications();
-      setNotifications(data);
+      setNotifications(data.map((item) => ({
+        ...item,
+        metadata: typeof item.metadata === 'object' && item.metadata !== null && !Array.isArray(item.metadata)
+          ? item.metadata as NotificationMetadata
+          : null,
+      })));
     } catch (err) {
       console.error(err);
     } finally {
@@ -37,8 +89,8 @@ export function NotificationBell() {
   };
 
   useEffect(() => {
-    loadNotifications();
-  }, [stateHash]);
+    if (isOpen) void loadNotifications();
+  }, [stateHash, isOpen]);
 
   const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,7 +113,12 @@ export function NotificationBell() {
   };
 
   return (
-    <DropdownMenu onOpenChange={(open) => open && loadNotifications()}>
+    <DropdownMenu
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (open) void loadNotifications();
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <button className="relative p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-gold-400 dark:hover:border-gold-600 transition-all group active:scale-95">
           <Bell className={cn(
@@ -114,7 +171,13 @@ export function NotificationBell() {
               {notifications.map((notif) => (
                 <DropdownMenuItem key={notif.id} asChild className="p-4 cursor-pointer focus:bg-gold-50 dark:focus:bg-gold-950 transition-colors">
                   <div className="relative group/item">
-                    <Link href="/agenda" className="flex items-start gap-3 pr-8">
+                    <Link
+                      href={getNotificationTarget(notif)}
+                      onClick={() => {
+                        if (!notif.isRead) void markAsRead(notif.id).then(refresh);
+                      }}
+                      className="flex items-start gap-3 pr-8"
+                    >
                       <div className={cn(
                         "mt-1.5 w-2 h-2 rounded-full flex-shrink-0 shadow-sm",
                         notif.isRead ? "bg-slate-200 dark:bg-slate-800" : "bg-rose-500 animate-pulse"
@@ -131,6 +194,10 @@ export function NotificationBell() {
                         </p>
                         <p className="text-[10px] text-slate-400 font-medium">
                           {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: ptBR })}
+                        </p>
+                        <p className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gold-600 dark:text-gold-400">
+                          {getNotificationCta(notif)}
+                          <ChevronRight className="w-3 h-3" />
                         </p>
                       </div>
                     </Link>
@@ -151,14 +218,6 @@ export function NotificationBell() {
         </div>
 
         <DropdownMenuSeparator className="bg-slate-100 dark:border-slate-800" />
-        
-        <Link 
-          href="/agenda" 
-          className="flex items-center justify-center gap-2 p-4 text-xs font-black text-gold-600 dark:text-gold-400 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors uppercase tracking-widest"
-        >
-          Ver Agenda Completa
-          <ChevronRight className="w-3 h-3" />
-        </Link>
       </DropdownMenuContent>
     </DropdownMenu>
   );

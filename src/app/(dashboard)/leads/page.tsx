@@ -4,9 +4,6 @@ import { getLeads } from '@/actions/leads';
 import { getTemplates } from '@/actions/templates';
 import { LeadsTableWrapper } from '@/features/leads/LeadsTableWrapper';
 import { LeadFilters } from '@/features/leads/LeadFilters';
-import { createServerSupabase } from '@/lib/supabase/server';
-import { prisma } from '@/lib/prisma';
-import { getPlanConfig } from '@/lib/plans';
 
 export const metadata = {
   title: 'Leads – LeadFlowPro',
@@ -24,25 +21,6 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   const status = typeof params.status === 'string' ? params.status : '';
   const stage = typeof params.stage === 'string' ? params.stage : '';
 
-  const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  let maxLeads: number | null = null;
-  if (user) {
-    try {
-      const profile = await prisma.profile.findUnique({
-        where: { authUid: user.id },
-        select: { plan: true },
-      });
-      if (profile) {
-        const planConfig = getPlanConfig(profile.plan);
-        maxLeads = planConfig.maxLeads;
-      }
-    } catch (error) {
-      console.error('Erro ao carregar limite do plano:', error);
-    }
-  }
-
   const [result, templatesResult] = await Promise.all([
     getLeads({ page, search, status, stage }),
     getTemplates().catch(() => [])
@@ -52,6 +30,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   const safeTotal = typeof result.total === 'number' ? result.total : 0;
   const safeTotalPages = typeof result.totalPages === 'number' ? result.totalPages : 1;
   const safeTemplates = Array.isArray(templatesResult) ? templatesResult : [];
+  const maxLeads = typeof result.maxLeads === 'number' ? result.maxLeads : null;
 
   return (
     <div className="space-y-6">

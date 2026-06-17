@@ -16,7 +16,9 @@ export default function AcessoSuspensoPage() {
         </p>
         <div className="space-y-3">
           <a
-            href="mailto:suporte@leadflowpro.com"
+            href="https://wa.me/5511961482455?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20com%20meu%20acesso%20ao%20LeadFlowPro"
+            target="_blank"
+            rel="noopener noreferrer"
             className="block w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-xl transition-all"
           >
             Falar com Suporte

@@ -223,20 +223,34 @@ export async function getAuthProfile() {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
       console.error('getAuthProfile: erro auth:', error);
-      throw new Error('Não autenticado');
+      throw new Error('Nao autenticado');
     }
 
-    const profile = await prisma.profile.upsert({
+    const existingProfile = await prisma.profile.findUnique({
       where: { authUid: user.id },
-      update: {},
-      create: {
-        authUid: user.id,
-        email: user.email!,
-        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário',
-      },
     });
 
-    return profile;
+    if (existingProfile) {
+      return existingProfile;
+    }
+
+    try {
+      return await prisma.profile.create({
+        data: {
+          authUid: user.id,
+          email: user.email!,
+          name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
+        },
+      });
+    } catch (createError: any) {
+      if (createError?.code === 'P2002') {
+        const profile = await prisma.profile.findUnique({
+          where: { authUid: user.id },
+        });
+        if (profile) return profile;
+      }
+      throw createError;
+    }
   } catch (err: any) {
     console.error('getAuthProfile erro:', err.message);
     if (

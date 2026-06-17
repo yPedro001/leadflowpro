@@ -10,7 +10,7 @@ function createPrismaClient(): PrismaClient {
   const connectionString = getRuntimeDatabaseUrl();
   const pool = new Pool({
     ...getPoolConfig(connectionString),
-    max: Number(process.env.PRISMA_POOL_MAX ?? 1),
+    max: Number(process.env.PRISMA_POOL_MAX ?? 3),
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
     ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: false } : undefined,

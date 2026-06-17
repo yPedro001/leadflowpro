@@ -76,6 +76,16 @@ export async function getNotifications() {
 
   return await prisma.notification.findMany({
     where: { profileId: profile.id },
+    select: {
+      id: true,
+      title: true,
+      message: true,
+      isRead: true,
+      type: true,
+      leadId: true,
+      metadata: true,
+      createdAt: true,
+    },
     orderBy: { createdAt: 'desc' },
     take: 20,
   });
