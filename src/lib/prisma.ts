@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
+import { Pool, type PoolConfig } from 'pg';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -9,7 +9,7 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const connectionString = getRuntimeDatabaseUrl();
   const pool = new Pool({
-    connectionString,
+    ...getPoolConfig(connectionString),
     max: Number(process.env.PRISMA_POOL_MAX ?? 3),
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
@@ -48,6 +48,18 @@ function getRuntimeDatabaseUrl(): string {
   url.searchParams.delete('sslmode');
 
   return url.toString();
+}
+
+function getPoolConfig(connectionString: string): PoolConfig {
+  const url = new URL(connectionString);
+
+  return {
+    host: url.hostname,
+    port: Number(url.port || 5432),
+    database: url.pathname.replace(/^\//, '') || 'postgres',
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+  };
 }
 
 function shouldUseSsl(connectionString: string): boolean {
