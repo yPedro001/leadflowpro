@@ -90,7 +90,7 @@ export default async function DashboardLayout({
             <Sidebar />
             <div className="flex-1 ml-64">
               <Header userName={profile?.name || user.email || 'Usuário'} />
-              <main className="p-4 md:p-6 pt-24">
+              <main className="px-4 pb-4 pt-24 md:px-6 md:pb-6 md:pt-24">
                 {children}
               </main>
             </div>
