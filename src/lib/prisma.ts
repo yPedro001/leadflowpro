@@ -7,12 +7,13 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
+  const connectionString = getRuntimeDatabaseUrl();
   const pool = new Pool({
-    connectionString: getRuntimeDatabaseUrl(),
+    connectionString,
     max: Number(process.env.PRISMA_POOL_MAX ?? 3),
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
-    ssl: shouldUseSsl() ? { rejectUnauthorized: false } : undefined,
+    ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: false } : undefined,
   });
 
   const adapter = new PrismaPg(pool, {
@@ -26,7 +27,7 @@ function createPrismaClient(): PrismaClient {
 }
 
 function getRuntimeDatabaseUrl(): string {
-  const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+  const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
 
   if (!connectionString) {
     console.error('[Prisma] DATABASE_URL/DIRECT_URL nao esta definida');
@@ -49,10 +50,7 @@ function getRuntimeDatabaseUrl(): string {
   return url.toString();
 }
 
-function shouldUseSsl(): boolean {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) return false;
-
+function shouldUseSsl(connectionString: string): boolean {
   const { hostname } = new URL(connectionString);
   return hostname !== 'localhost' && hostname !== '127.0.0.1';
 }

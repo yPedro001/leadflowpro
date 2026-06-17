@@ -29,13 +29,17 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
   let maxLeads: number | null = null;
   if (user) {
-    const profile = await prisma.profile.findUnique({
-      where: { authUid: user.id },
-      select: { plan: true },
-    });
-    if (profile) {
-      const planConfig = getPlanConfig(profile.plan);
-      maxLeads = planConfig.maxLeads;
+    try {
+      const profile = await prisma.profile.findUnique({
+        where: { authUid: user.id },
+        select: { plan: true },
+      });
+      if (profile) {
+        const planConfig = getPlanConfig(profile.plan);
+        maxLeads = planConfig.maxLeads;
+      }
+    } catch (error) {
+      console.error('Erro ao carregar limite do plano:', error);
     }
   }
 

@@ -6,9 +6,9 @@ datasource db {
   provider = "postgresql"
 }
 
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // Enums de Controle Administrativo (gestaleadflow-pro)
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 enum UserPlan {
   STARTER
@@ -39,9 +39,9 @@ enum UserRole {
   SUPER_ADMIN
 }
 
-// ═══════════════════════════════════════════════════════════
-// Profile — estendido com campos de plano e controle de acesso
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Profile â€” estendido com campos de plano e controle de acesso
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 model Profile {
   id               String        @id @default(dbgenerated("gen_random_uuid()::text"))
@@ -75,7 +75,7 @@ model Profile {
 }
 
 model Lead {
-  id             String     @id @default(uuid())
+  id             String     @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId      String     @map("profile_id")
   code           String     @unique @default(cuid())
   fullName       String     @map("full_name")
@@ -100,7 +100,7 @@ model Lead {
   leadNotes        LeadNote[]
   scheduledActions LeadScheduledAction[]
 
-  // Nova relação de Cadência
+  // Nova relaÃ§Ã£o de CadÃªncia
   cadenceEngine LeadCadenceProgress?
 
   @@index([profileId])
@@ -118,7 +118,7 @@ model Lead {
 }
 
 model CadenceEngine {
-  id          String         @id @default(uuid())
+  id          String         @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId   String?        @map("profile_id")
   name        String
   description String?
@@ -135,7 +135,7 @@ model CadenceEngine {
 }
 
 model CadenceStage {
-  id         String          @id @default(uuid())
+  id         String          @id @default(dbgenerated("gen_random_uuid()::text"))
   cadenceId  String          @map("cadence_id")
   order      Int
   channel    TemplateChannel
@@ -153,7 +153,7 @@ model CadenceStage {
 }
 
 model LeadCadenceProgress {
-  id                String        @id @default(uuid())
+  id                String        @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId         String        @map("profile_id")
   leadId            String        @unique @map("lead_id")
   cadenceId         String        @map("cadence_id")
@@ -181,7 +181,7 @@ model LeadCadenceProgress {
 }
 
 model LeadCadenceEvent {
-  id                    String   @id @default(uuid())
+  id                    String   @id @default(dbgenerated("gen_random_uuid()::text"))
   leadCadenceProgressId String   @map("lead_cadence_id")
   leadId                String   @map("lead_id")
   action                String
@@ -199,7 +199,7 @@ model LeadCadenceEvent {
 }
 
 model Template {
-  id        String          @id @default(uuid())
+  id        String          @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId String          @map("profile_id")
   name      String
   channel   TemplateChannel
@@ -219,7 +219,7 @@ model Template {
 }
 
 model LeadHistory {
-  id           String   @id @default(uuid())
+  id           String   @id @default(dbgenerated("gen_random_uuid()::text"))
   leadId       String   @map("lead_id")
   previousData Json     @map("previous_data")
   newData      Json     @map("new_data")
@@ -264,7 +264,7 @@ enum CadenceStatus {
 }
 
 model Operator {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId String   @map("profile_id")
   name      String
   isActive  Boolean  @default(true) @map("is_active")
@@ -283,7 +283,7 @@ model Operator {
 }
 
 model LeadNote {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("gen_random_uuid()::text"))
   leadId     String   @map("lead_id")
   operatorId String?  @map("operator_id")
   content    String
@@ -299,7 +299,7 @@ model LeadNote {
 }
 
 model Notification {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId String   @map("profile_id")
   leadId    String?  @map("lead_id")
   title     String
@@ -319,12 +319,12 @@ model Notification {
   @@map("notifications")
 }
 
-// ═══════════════════════════════════════════════════════════
-// Ações Manuais Agendadas — independentes da cadência automática
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// AÃ§Ãµes Manuais Agendadas â€” independentes da cadÃªncia automÃ¡tica
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 model LeadScheduledAction {
-  id                    String               @id @default(uuid())
+  id                    String               @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId             String               @map("profile_id")
   leadId                String               @map("lead_id")
   title                 String
@@ -377,12 +377,12 @@ enum ManualActionStatus {
   MISSED
 }
 
-// ═══════════════════════════════════════════════════════════
-// BillingRecord — Histórico de pagamentos manuais
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// BillingRecord â€” HistÃ³rico de pagamentos manuais
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 model BillingRecord {
-  id            String        @id @default(uuid())
+  id            String        @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId     String        @map("profile_id")
   amount        Decimal       @db.Decimal(10, 2)
   paymentStatus PaymentStatus @map("payment_status")
@@ -402,12 +402,12 @@ model BillingRecord {
   @@map("billing_records")
 }
 
-// ═══════════════════════════════════════════════════════════
-// AdminAuditLog — Log de ações administrativas
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// AdminAuditLog â€” Log de aÃ§Ãµes administrativas
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 model AdminAuditLog {
-  id             String   @id @default(uuid())
+  id             String   @id @default(dbgenerated("gen_random_uuid()::text"))
   adminEmail     String   @map("admin_email")
   targetProfileId String? @map("target_profile_id")
   targetEmail    String?  @map("target_email")
@@ -424,9 +424,9 @@ model AdminAuditLog {
   @@map("admin_audit_logs")
 }
 
-// ═══════════════════════════════════════════════════════════
-// Suporte Técnico (SaaS)
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Suporte TÃ©cnico (SaaS)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 enum TicketCategory {
   ACESSO
@@ -458,7 +458,7 @@ enum MessageSenderType {
 }
 
 model SupportTicket {
-  id              String         @id @default(uuid())
+  id              String         @id @default(dbgenerated("gen_random_uuid()::text"))
   profileId       String         @map("profile_id")
   category        TicketCategory
   title           String
@@ -485,7 +485,7 @@ model SupportTicket {
 }
 
 model SupportTicketMessage {
-  id              String            @id @default(uuid())
+  id              String            @id @default(dbgenerated("gen_random_uuid()::text"))
   ticketId        String            @map("ticket_id")
   senderType      MessageSenderType @map("sender_type")
   senderProfileId String?           @map("sender_profile_id")
