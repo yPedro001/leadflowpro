@@ -6,18 +6,19 @@ import Link from 'next/link';
 
 export const metadata = { title: 'Chamado | LeadFlowPro' };
 
-export default async function ChamadoDetailsPage({ params }: { params: { id: string } }) {
-  const ticket = await getTicketDetails(params.id);
+export default async function ChamadoDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const ticket = await getTicketDetails(id);
 
   async function handleReply(formData: FormData) {
     'use server';
     const message = formData.get('message') as string;
-    await replyTicket(params.id, message);
+    await replyTicket(id, message);
   }
 
   async function handleReopen() {
     'use server';
-    await requestReopen(params.id);
+    await requestReopen(id);
   }
 
   const getStatusBadge = (status: string) => {
