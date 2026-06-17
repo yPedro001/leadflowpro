@@ -27,7 +27,7 @@ function createPrismaClient(): PrismaClient {
 }
 
 function getRuntimeDatabaseUrl(): string {
-  const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+  const connectionString = process.env.SUPABASE_POOL_URL || process.env.DATABASE_URL || process.env.DIRECT_URL;
 
   if (!connectionString) {
     console.error('[Prisma] DATABASE_URL/DIRECT_URL nao esta definida');
@@ -41,15 +41,7 @@ function getRuntimeDatabaseUrl(): string {
   }
 
   if (url.hostname.endsWith('.pooler.supabase.com')) {
-    const projectRef = url.username.startsWith('postgres.')
-      ? url.username.slice('postgres.'.length)
-      : undefined;
-
-    if (projectRef) {
-      url.hostname = `db.${projectRef}.supabase.co`;
-      url.username = 'postgres';
-    }
-
+    url.port = '5432';
     url.searchParams.delete('pgbouncer');
   }
 
