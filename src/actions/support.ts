@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthProfile } from './auth';
 import { revalidatePath } from 'next/cache';
 import { TicketCategory, TicketStatus, TicketPriority } from '@prisma/client';
+import { getTicketsFromSupabase } from '@/lib/supabase/fallback-db';
 
 export async function createTicket(data: { category: TicketCategory, title: string, description: string }) {
   const profile = await getAuthProfile();
@@ -33,21 +34,28 @@ export async function createTicket(data: { category: TicketCategory, title: stri
 
 export async function getTickets() {
   const profile = await getAuthProfile();
-  if (!profile) throw new Error('Não autorizado');
+  if (!profile) throw new Error('Nao autorizado');
 
-  return await prisma.supportTicket.findMany({
-    where: { profileId: profile.id },
-    orderBy: { lastMessageAt: 'desc' },
-    select: {
-      id: true,
-      category: true,
-      title: true,
-      status: true,
-      createdAt: true,
-      lastMessageAt: true,
-      isReadByCustomer: true
+  try {
+    return await prisma.supportTicket.findMany({
+      where: { profileId: profile.id },
+      orderBy: { lastMessageAt: 'desc' },
+      select: {
+        id: true,
+        category: true,
+        title: true,
+        status: true,
+        createdAt: true,
+        lastMessageAt: true,
+        isReadByCustomer: true
+      }
+    });
+  } catch (error: any) {
+    if (error?.message?.includes('ENOTFOUND') || error?.message?.includes('database') || error?.message?.includes('connection')) {
+      return getTicketsFromSupabase(profile.id);
     }
-  });
+    throw error;
+  }
 }
 
 export async function getTicketDetails(id: string) {

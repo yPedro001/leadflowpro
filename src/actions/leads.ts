@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import type { LeadStatus } from '@prisma/client';
 import { getAuthProfile } from './auth';
+import { getLeadPageFromSupabase } from '@/lib/supabase/fallback-db';
 
 // ═══════════════════════
 // Schemas
@@ -212,15 +213,23 @@ export async function getLeads({
     ]);
 
     const totalPages = Math.ceil(total / take);
-    return { leads, total, page, totalPages };
+    return { leads, total, page, totalPages, error: undefined as string | undefined };
   } catch (error: any) {
     console.error('getLeads: Erro ao buscar leads:', error);
-    return { 
-      leads: [], 
-      total: 0, 
-      page: 1, 
+    if (error?.message?.includes('ENOTFOUND') || error?.message?.includes('database') || error?.message?.includes('connection')) {
+      try {
+        return await getLeadPageFromSupabase({ profileId: profile.id, page, take, search, status });
+      } catch (fallbackError: any) {
+        console.error('getLeads: fallback Supabase falhou:', fallbackError);
+      }
+    }
+
+    return {
+      leads: [],
+      total: 0,
+      page: 1,
       totalPages: 0,
-      error: error?.message || 'Erro ao carregar leads'
+      error: error?.message || 'Erro ao carregar leads',
     };
   }
 }

@@ -9,14 +9,20 @@ import { CadenceProvider } from '@/components/providers/CadenceProvider';
 import { ProfileProvider } from '@/components/providers/ProfileProvider';
 import { prisma } from '@/lib/prisma';
 import { unstable_cache } from 'next/cache';
+import { getOperatorsFromSupabase, getOrCreateProfileFromSupabase } from '@/lib/supabase/fallback-db';
 
 const getOperatorsCached = unstable_cache(
   async (profileId: string) => {
-    return prisma.operator.findMany({
-      where: { profileId, isActive: true },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, isActive: true },
-    });
+    try {
+      return await prisma.operator.findMany({
+        where: { profileId, isActive: true },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, isActive: true },
+      });
+    } catch (error) {
+      console.error('[Layout] Fallback Supabase para operadores:', error);
+      return getOperatorsFromSupabase(profileId);
+    }
   },
   ['operators'],
   { revalidate: 300, tags: ['operators'] }
@@ -43,7 +49,11 @@ export default async function DashboardLayout({
     });
   } catch (error: any) {
     console.error('[Layout] Erro ao buscar profile:', error);
-    profileError = error.message;
+    try {
+      profile = await getOrCreateProfileFromSupabase(user);
+    } catch (fallbackError: any) {
+      profileError = fallbackError.message;
+    }
   }
 
   if (profileError) {

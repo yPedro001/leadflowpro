@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { createServerSupabase, createAdminSupabase } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { getOrCreateProfileFromSupabase } from '@/lib/supabase/fallback-db';
 
 // ═══════════════════════════════════════════
 // Schemas de validação
@@ -238,8 +239,16 @@ export async function getAuthProfile() {
     return profile;
   } catch (err: any) {
     console.error('getAuthProfile erro:', err.message);
-    if (err.message.includes('ECONNREFUSED') || err.message.includes('connection')) {
-      throw new Error('Banco de dados indisponível. Verifique se o projeto Supabase está ativo.');
+    if (
+      err.message.includes('ECONNREFUSED') ||
+      err.message.includes('connection') ||
+      err.message.includes('ENOTFOUND') ||
+      err.message.includes('database')
+    ) {
+      const supabase = await createServerSupabase();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) throw new Error('Nao autenticado');
+      return getOrCreateProfileFromSupabase(user);
     }
     throw err;
   }
