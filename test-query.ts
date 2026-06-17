@@ -8,3 +8,5 @@ async function run() {
   }
 }
 run();
+
+export {};

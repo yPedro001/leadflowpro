@@ -77,3 +77,5 @@ async function testLoginAndAccess() {
 }
 
 testLoginAndAccess();
+
+export {};
