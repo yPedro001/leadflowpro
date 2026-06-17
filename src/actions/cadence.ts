@@ -5,6 +5,16 @@ import { revalidatePath } from 'next/cache';
 import { CadenceStatus, TemplateChannel } from '@prisma/client';
 import { getAuthProfile } from './auth';
 import { formatNextActionDisplay } from '@/lib/utils';
+import { getPlanConfig } from '@/lib/plans';
+
+const DEFAULT_CADENCE_STAGES = [
+  { order: 1, channel: 'LINKEDIN' as const, delayDays: 0 },
+  { order: 2, channel: 'LINKEDIN' as const, delayDays: 2 },
+  { order: 3, channel: 'EMAIL' as const, delayDays: 1 },
+  { order: 4, channel: 'WHATSAPP' as const, delayDays: 3 },
+  { order: 5, channel: 'LINKEDIN' as const, delayDays: 5 },
+  { order: 6, channel: 'EMAIL' as const, delayDays: 7 },
+];
 
 /**
  * TRAVA LEAD: Reserva o lead para um operador por 5 minutos
@@ -966,27 +976,56 @@ export async function updateCadenceSettings(cadenceId: string, stagesData: any[]
  * GARANTE CADÊNCIA PADRÃO: Cria se não existir
  */
 async function ensureDefaultCadence(profileId: string) {
+  const profile = await prisma.profile.findUnique({
+    where: { id: profileId },
+    select: { plan: true },
+  });
+  const planConfig = getPlanConfig(profile?.plan || 'STARTER');
+  const maxStages = planConfig.maxCadenceStages;
+  const stagesForPlan = maxStages === null
+    ? DEFAULT_CADENCE_STAGES
+    : DEFAULT_CADENCE_STAGES.slice(0, maxStages);
+
   const existing = await prisma.cadenceEngine.findFirst({
-    where: { profileId }
+    where: { profileId },
+    include: { stages: { orderBy: { order: 'asc' } } },
   });
 
-  if (existing) return;
+  if (existing) {
+    if (maxStages !== null && existing.stages.length > maxStages) {
+      await prisma.$transaction(async (tx) => {
+        await tx.cadenceStage.deleteMany({
+          where: {
+            cadenceId: existing.id,
+            order: { gt: maxStages },
+          },
+        });
+
+        await tx.leadCadenceProgress.updateMany({
+          where: {
+            cadenceId: existing.id,
+            currentStageOrder: { gt: maxStages },
+            status: 'ACTIVE',
+          },
+          data: {
+            currentStageOrder: maxStages,
+            nextStageOrder: null,
+            version: { increment: 1 },
+          },
+        });
+      });
+    }
+    return;
+  }
 
   // Cria cadência padrão de prospecção usando o novo modelo CadenceEngine
   await prisma.cadenceEngine.create({
     data: {
       profileId,
       name: '👣 Prospecção Inicial Multi-canal',
-      description: 'Cadência padrão de 6 estágios (LinkedIn + E-mail + WhatsApp)',
+      description: `Cadência padrão de ${stagesForPlan.length} estágios respeitando o plano atual.`,
       stages: {
-        create: [
-          { order: 1, channel: 'LINKEDIN', delayDays: 0 },
-          { order: 2, channel: 'LINKEDIN', delayDays: 2 },
-          { order: 3, channel: 'EMAIL', delayDays: 1 },
-          { order: 4, channel: 'WHATSAPP', delayDays: 3 },
-          { order: 5, channel: 'LINKEDIN', delayDays: 5 },
-          { order: 6, channel: 'EMAIL', delayDays: 7 },
-        ]
+        create: stagesForPlan,
       }
     }
   });
