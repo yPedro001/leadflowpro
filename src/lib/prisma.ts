@@ -10,7 +10,7 @@ function createPrismaClient(): PrismaClient {
   const connectionString = getRuntimeDatabaseUrl();
   const pool = new Pool({
     ...getPoolConfig(connectionString),
-    max: Number(process.env.PRISMA_POOL_MAX ?? 3),
+    max: Number(process.env.PRISMA_POOL_MAX ?? 1),
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
     ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: false } : undefined,
@@ -41,7 +41,6 @@ function getRuntimeDatabaseUrl(): string {
   }
 
   if (url.hostname.endsWith('.pooler.supabase.com')) {
-    url.port = '5432';
     url.searchParams.delete('pgbouncer');
   }
 
