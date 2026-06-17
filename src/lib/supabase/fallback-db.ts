@@ -36,17 +36,53 @@ export async function getOperatorsFromSupabase(profileId: string) {
   const admin = createAdminSupabase();
   const { data, error } = await admin
     .from('operators')
-    .select('id, name, is_active')
+    .select('id, profile_id, name, is_active, created_at, updated_at')
     .eq('profile_id', profileId)
     .eq('is_active', true)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((operator) => ({
-    id: operator.id,
-    name: operator.name,
-    isActive: operator.is_active,
-  }));
+  return (data ?? []).map(normalizeOperator);
+}
+
+export async function getAllOperatorsFromSupabase(profileId: string) {
+  const admin = createAdminSupabase();
+  const { data, error } = await admin
+    .from('operators')
+    .select('id, profile_id, name, is_active, created_at, updated_at')
+    .eq('profile_id', profileId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []).map(normalizeOperator);
+}
+
+export async function countActiveOperatorsFromSupabase(profileId: string) {
+  const admin = createAdminSupabase();
+  const { count, error } = await admin
+    .from('operators')
+    .select('id', { count: 'exact', head: true })
+    .eq('profile_id', profileId)
+    .eq('is_active', true);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function createOperatorFromSupabase(profileId: string, name: string) {
+  const admin = createAdminSupabase();
+  const { data, error } = await admin
+    .from('operators')
+    .insert({
+      profile_id: profileId,
+      name,
+      is_active: true,
+    })
+    .select('id, profile_id, name, is_active, created_at, updated_at')
+    .single();
+
+  if (error) throw error;
+  return normalizeOperator(data);
 }
 
 export async function getLeadPageFromSupabase({
@@ -132,6 +168,17 @@ function normalizeProfile(profile: any) {
     suspensionReason: profile.suspension_reason,
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
+  };
+}
+
+function normalizeOperator(operator: any) {
+  return {
+    id: operator.id,
+    profileId: operator.profile_id,
+    name: operator.name,
+    isActive: operator.is_active,
+    createdAt: operator.created_at,
+    updatedAt: operator.updated_at,
   };
 }
 
